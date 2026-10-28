@@ -1,32 +1,34 @@
-# 0003. Where it sits: a keyless proxy in front of the gateway
+# 0003. Where it sits: out of the request path
 
-- Status: proposed
-- Date: 2026-10-28
+- Status: accepted (owner, 2026-10-29)
+- Date: 2026-10-29
 
 ## Context
 
-Two places can read the headers and act: a plugin inside the LLM gateway (Bifrost), or a separate proxy in front of it. Bifrost holds every provider key of the deployment.
+Three places can pace a subscription: a plugin inside an LLM gateway, a proxy in front of it, or a ledger beside it that clients ask before they start. Anthropic's Usage Policy, effective 2026-11-12, forbids "services that route requests through consumer subscriptions" (legal.md, claim 3).
 
-## Evidence (spike, 2026-10-28)
+## Evidence
 
-- Stock Bifrost v2.3.2 forwards `anthropic-ratelimit-unified-*` on streamed replies and on 429s; a proxy in front sees everything it needs.
-- Bifrost v2.3.2 cannot fail an OAuth pass-through call over to an API key: its fallback path keeps the caller's pass-through headers, so a same-provider fallback re-sends the OAuth token (tested with a mock upstream). A credential swap has to happen before Bifrost, in the client or in a proxy in front.
-- Bifrost's logs store upstream 429s but no response headers.
+- A proxy and a gateway plugin both route requests through the subscription. Whether a single-owner proxy is such a "service" is UNKNOWN; the owner chose not to depend on the narrow reading.
+- Everything a ledger needs is documented by Anthropic without a proxy (ADR 0012): the plan's meter reaches the Agent SDK and `claude -p` as `rate_limit_event`, the `/usage` command returns it as a structured `usage_report`, and the interactive status line receives it as `rate_limits`; each run's result carries `modelUsage` and `total_cost_usd`.
+- A spike (2026-10-28) found that a gateway (Bifrost v2.3.2) can't swap an OAuth pass-through call to an API key on its own; in a ledger the client switches credential itself, so that limit no longer matters.
 
 ## Options
 
-1. **Bifrost plugin.** One process fewer. Blast radius: a bug or a panic in new code runs inside the process that holds every provider key and serves every consumer, including ones subgate doesn't meter. Tied to Bifrost's plugin API and release cadence. Can't swap credentials on pass-through (above) without patching Bifrost.
-2. **Standalone proxy in front, holding no provider keys.** Blast radius: only the consumers routed through it; a crash stops those consumers (automation holds, which is the safe side; the owner's route fails over, ADR 0008). Holds at most the gateway keys the `api` action swaps in, never a provider key. Upstream is configurable, so it works with any gateway or straight to `api.anthropic.com`.
-3. **Client-side only (each consumer reads a shared counter).** No proxy, but every consumer needs code, and no one sees the headers (legal.md claim 9: they reach the client binary, not its caller). Becomes ADR 0010's ledger mode, which still needs a signal source.
+1. **Gateway plugin.** Routes requests; runs inside the process that holds every provider key. Rejected.
+2. **Proxy in front of the gateway.** Routes requests; the earlier design (git history, 2026-10-28). Rejected on the terms.
+3. **Ledger beside the clients.** Consumers ask "may I start, and how much is left?", call Anthropic directly on their own login with the unmodified client, and report what they used. No request passes through subgate, and subgate never sees a credential.
 
 ## Decision
 
-Option 2. subgate is a separate process: `client → subgate → gateway (optional) → Anthropic`. A `hold`-only deployment holds no secrets at all.
+Option 3. subgate is a small HTTP service plus a client CLI. It holds no provider key, no OAuth token and no gateway key, in every mode.
 
 ## Consequences
 
-One more hop: +1.5 ms p50 and +3 ms p95 to first byte in the spike (ADR 0002). Without a gateway, the `api` action needs a real provider key in subgate; the docs say so and recommend a gateway, or `hold` as the only action, for that case.
+- Pacing is cooperative: a consumer that doesn't ask is not paced, only seen (its use shows up as untracked in the account meter, ADR 0005). The client CLI (`subgate run`) makes asking a one-word change for any script.
+- Decisions are per job, not per request: a long job admitted under its share can overrun it. A reservation at admission (ADR 0007) bounds that.
+- subgate works with or without a gateway and never assumes one sits in front of the subscription.
 
 ## Reopen if
 
-Bifrost (or another gateway) exposes response headers to plugins and supports credential swap on pass-through, and the extra hop measurably matters.
+Anthropic states that a single-owner, self-hosted proxy is permitted, and per-request control is worth the extra moving part.

@@ -5,7 +5,7 @@
 
 ## Context
 
-subgate's design rests on measurements that go stale: Anthropic's headers, its terms, the proxy's overhead. Later readers need the reason and the evidence, not just the outcome.
+subgate's design rests on measurements that go stale: Anthropic's terms, the shape of the usage data its clients receive, the plan's meter. Later readers need the reason and the evidence, not just the outcome.
 
 ## Decision
 

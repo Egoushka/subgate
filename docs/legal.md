@@ -1,12 +1,16 @@
 # Terms and legal position
 
-Read 2026-10-28. Not legal advice. Anthropic can change any of this; re-read the sources before each milestone.
+Read 2026-10-28 and 2026-10-29. Not legal advice. Anthropic can change any of this; re-read the sources before each milestone.
 
 ## Verdict
 
-subgate is software you run yourself, for your own subscription, on your own login, for your own clients. Nothing in Anthropic's terms clearly forbids that, and nothing clearly allows it either: the status is **UNKNOWN**. A hosted or shared deployment, where one subscription serves other people, is **forbidden** and is out of scope for this project.
+subgate is software you run yourself, for your own subscription, on your own login, for your own programs. It sits **beside** the subscription, not in front of it: your programs call Anthropic directly with the unmodified Claude Code or Agent SDK, and only tell subgate what they are about to do and what they used (ADR 0003). No request and no credential passes through it.
 
-The closest rule is a new line in the Usage Policy that takes effect on 2026-11-12. It forbids "services that route requests through consumer subscriptions" as one way to "resell, proxy, or otherwise provide access to Claude through unauthorized means". Read narrowly, it targets services that give *other people* access. Read broadly, it covers any proxy in the request path of a subscription, including one that serves only its owner. Because of this line, the engine is built so the request path is optional (ADR 0010): the same pacing can run as a ledger that clients ask before they start, with no subgate in the request path.
+That keeps it on the documented side of every line below. Your own `claude -p` and Agent SDK automation on your own login is documented as drawing from your plan (claim 7). The data subgate reads (the `rate_limit_event`, the `/usage` report, the status line's `rate_limits`, each run's cost) is data Anthropic hands to those clients for this purpose (ADR 0012). What stays UNKNOWN is outside subgate: how much unattended automation still counts as "ordinary, individual usage" (claim 4). subgate's job is to keep that use paced and visible.
+
+A hosted or shared deployment, where one subscription serves other people, is **forbidden** and out of scope.
+
+The line that shaped this design is in the Usage Policy effective 2026-11-12: it forbids "services that route requests through consumer subscriptions" (claim 3). A proxy, even one serving only its owner, might be read as one. subgate was redesigned on 2026-10-29 to route nothing (ADR 0010).
 
 ## Claims
 
@@ -29,41 +33,43 @@ Status: CONFIRMED (the source says it), PARTIALLY CONFIRMED, UNKNOWN (no source 
 | 13 | Anthropic's trademarks need permission, and their use must not imply endorsement. Nominative use in open-source READMEs is not addressed. | [Trademark guidelines](https://www.anthropic.com/legal/trademark-guidelines) | CONFIRMED; nominative use UNKNOWN |
 | 14 | Reports of a 2026 ban on third-party tools using subscription OAuth, its enforcement and a reversal. | secondary press only | UNKNOWN. No Anthropic statement found. |
 | 15 | Accounts banned for running personal proxies. | blogs and issues only | UNKNOWN |
+| 16 | The status line command receives the plan's `rate_limits` (5-hour and 7-day `used_percentage`, `resets_at`) for Pro and Max subscribers. | [Status line](https://code.claude.com/docs/en/statusline) (fetched 2026-10-29) | CONFIRMED |
+| 17 | Agent SDK output carries a `rate_limit_event` with `status`, `utilization` and `resetsAt`; `/usage` sent as a prompt returns a structured `usage_report` with the plan's meters (marked experimental). | [TypeScript SDK](https://code.claude.com/docs/en/agent-sdk/typescript), [Python SDK](https://code.claude.com/docs/en/agent-sdk/python) (fetched 2026-10-29) | CONFIRMED |
+| 18 | A `-p` run's JSON result carries `total_cost_usd` and a per-model breakdown "so scripted callers can track spend". | [Headless](https://code.claude.com/docs/en/headless) (fetched 2026-10-29) | CONFIRMED |
 
-## The four questions
+## The questions
 
 | Use | Status | Why |
 |---|---|---|
 | Your own Agent SDK or `claude -p` automation on your own login | Allowed, within "ordinary, individual usage" | Claims 6 and 7 document it. Heavy unattended parallel use measured against "ordinary" is undefined. Claim 1 conflicts literally and is softened by 7 ("where we otherwise explicitly permit it"). |
-| A self-hosted proxy forwarding your own token for your own clients | UNKNOWN | Claims 5 and 11 target third parties serving others, which this is not. Claim 9 documents a base-URL gateway that keeps the login. Claim 3, read broadly, covers it. |
-| Publishing the code | UNKNOWN, no rule found against it | Keep "Claude" and "Anthropic" out of the name; never imply endorsement (claim 13). |
+| subgate's ledger reading what those clients already receive, and pacing them | No rule found against it; nothing is routed or intermediated | Claims 3, 5 and 11 concern routing requests and handling credentials, which the ledger doesn't do. |
+| The `/usage` sampler: a small Claude Code run on your own login every 30 minutes | Same status as your other automation (row 1) | It runs the unmodified client with a documented command (ADR 0012). |
+| A self-hosted proxy forwarding your own token | UNKNOWN; not built (ADR 0010) | Claim 3, read broadly, covers it. |
+| Publishing the code | No rule found against it | Keep "Claude" and "Anthropic" out of the name; never imply endorsement (claim 13). |
 | A hosted or shared service | Forbidden | Claims 2, 3, 5 and 11. |
 
 ## Stop condition
 
 The project stops, and the README says so within a week, if any of these happens:
 
-- Anthropic states that a personal proxy in front of one's own subscription is not permitted, in its terms, docs or support articles.
-- The Usage Policy line in claim 3 is clarified to cover single-owner, self-hosted use.
+- Anthropic states that pacing one's own automation from the clients' own usage data is not permitted, or removes that data from the clients.
 - Anthropic resumes the paused change in claim 7 in a way that ends plan billing for the Agent SDK or `claude -p`. (The tool may still be useful for API credits; reassess.)
-
-Until then the ledger mode (ADR 0010) is the fallback that keeps the pacing without being in the request path.
 
 ## What subgate does, and never does
 
 These are design rules, enforced by tests where a test can enforce them.
 
 - It runs for one owner. Every consumer is the owner's own program. There is no sign-up, no multi-tenant mode, no way to add someone else's subscription.
-- It forwards the client's credential and never stores or logs it. It has no login flow and never reads `~/.claude/.credentials.json`.
-- It never changes the client's identity: `user-agent`, `x-app`, `anthropic-beta` and the client's other headers pass unchanged (claim 3's "misrepresent the product or client being used"). The `cheap` action rewrites only the `model` field, and only on a request it moves to an API key.
-- It never helps get past a limit. On overrun it holds (429), moves the call to the owner's own API key, or moves it to a cheaper model on that key. It never rotates accounts or tokens.
-- It uses the unmodified Claude Code binary and Agent SDK as clients.
+- It is never in the request path. Clients call Anthropic directly.
+- It holds no credential: no OAuth token, no API key, no gateway key. It never reads `~/.claude/.credentials.json`. Its own tokens (ADR 0006) give no access to Anthropic.
+- It never changes how a client identifies itself. `subgate run` starts the command unchanged and passes the decision to it as environment variables (`SUBGATE_DECISION`, `SUBGATE_MODEL`); the command's own configuration picks its credential and model.
+- It never helps get past a limit. It holds, or points the job at the owner's own API key or a cheaper model on it. It never rotates accounts or tokens.
 
 ## README notice
 
-The README carries this notice verbatim:
+The README carries this notice verbatim, with `docs/legal.md` as a link:
 
-> subgate is independent software, not affiliated with or endorsed by Anthropic. Run it yourself, for your own subscription, on your own login, for your own programs. Never host it for other people or share a subscription through it. Whether your use complies with Anthropic's Consumer Terms and Usage Policy is yours to check; see [docs/legal.md](docs/legal.md).
+> subgate is independent software, not affiliated with or endorsed by Anthropic. Run it yourself, for your own subscription, on your own login, for your own programs. Never host it for other people or share a subscription through it. Whether your use complies with Anthropic's Consumer Terms and Usage Policy is yours to check; see `docs/legal.md`.
 
 ## Not read in full
 

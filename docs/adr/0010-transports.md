@@ -1,25 +1,21 @@
-# 0010. Two transports over one engine: proxy now, ledger as the fallback
+# 0010. Ledger first; the proxy is off the roadmap
 
-- Status: accepted (owner, 2026-10-29)
-- Date: 2026-10-28
+- Status: accepted (owner, 2026-10-29). Replaces an earlier version of this ADR, accepted the same day, that put the proxy first with the ledger as a fallback.
+- Date: 2026-10-29
 
 ## Context
 
-The Usage Policy effective 2026-11-12 forbids "services that route requests through consumer subscriptions" (legal.md, claim 3). Whether a single-owner, self-hosted proxy is such a service is UNKNOWN. If it is, the proxy transport must go, and the pacing should survive that.
-
-## Options
-
-1. **Proxy** (ADR 0003): in the request path; reads the plan's headers on every reply; can act on a request (hold, swap to an API key, cheaper model). Accurate, works with unmodified clients.
-2. **Ledger**: not in the request path. Clients call `POST /v1/admit {consumer, estimate}` before a job and get `allow`, `hold` (with an approval id) or `api`/`cheap` (the client switches credential or model itself). Usage arrives after the fact from the clients' own telemetry (Claude Code exports token usage over OpenTelemetry) or from a gateway's per-key counts. The account signal needs a source outside the request path: UNKNOWN which one is permitted (the status line's data reaches only the interactive client).
+The engine (ADR 0004) can take its observations from a proxy's response tap or from clients' reports. The Usage Policy line effective 2026-11-12 (legal.md, claim 3) makes the proxy's status UNKNOWN; the ledger routes nothing (ADR 0003).
 
 ## Decision
 
-Build the proxy first, keep the engine transport-neutral (ADR 0004), and add the ledger in v0.3. If the stop condition in legal.md triggers, the proxy transport is removed and the ledger stays.
+- v0.1 to v0.3 ship the ledger only: the HTTP API (ADR 0007), the client CLI, the signal sampler and the status-line reporter (ADR 0012).
+- The proxy transport is not on the roadmap. The engine stays transport-neutral, taking `Observation`s from any source, so a proxy can be added later without touching the engine.
 
 ## Consequences
 
-`engine` takes usage events from any source, not only from a response tap. The ledger's admission check works per job, not per request, so it's coarser.
+The spike's proxy code and its latency numbers stay as evidence (ADR 0002) but ship nothing.
 
 ## Reopen if
 
-Anthropic clarifies the Usage Policy line either way.
+Anthropic clarifies that a single-owner, self-hosted proxy is permitted.

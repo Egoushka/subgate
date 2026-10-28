@@ -1,36 +1,37 @@
 # Features, and why each one exists
 
-The problem: one Claude Max subscription serves its owner's interactive work and several automated programs (a coding-agent orchestrator, a memory service, an assistant, a review guard). The plan has one weekly allowance for all of them. Nothing stops one program from spending the week by Wednesday, and nothing tells any program how much of the week is left. subgate gives each program a share, paces it, and decides what happens on overrun.
+The problem: one Claude Max subscription serves its owner's interactive work and several automated programs (a coding-agent orchestrator, a memory service, an assistant, a review guard). The plan has one weekly allowance for all of them. Nothing stops one program from spending the week by Wednesday, and nothing tells any program how much of the week is left. subgate gives each program a share, paces it, and tells each program what to do when it's over. It does this beside the subscription, never in its request path (ADR 0003).
 
-**Evidence policy.** The numbers behind these features come from the author's own setup and stay private (a "private measurement" below). What is public is the measured behaviour of Anthropic's headers and of the code (see [architecture.md](architecture.md)).
+**Evidence policy.** The numbers behind these features come from the author's own setup and stay private (a "private measurement" below). What is public is Anthropic's documentation, the measured behaviour of the plan's meter, and the simulation (see [architecture.md](architecture.md)).
 
-Versions: v0.1 is signal only, v0.2 gating, v0.3 approvals and console ([roadmap.md](roadmap.md)).
+Versions: v0.1 is signal only (observe), v0.2 enforcement and actions, v0.3 approvals and the console ([roadmap.md](roadmap.md)).
 
 | # | Feature | Problem it solves | Who it serves | Evidence | Lands in |
 |---|---|---|---|---|---|
-| 1 | **Read the plan's own meter** | The owner sees the weekly number only in the interactive status line; a headless `claude -p` run cannot pass it to its caller. | every consumer, the owner | Anthropic sends `anthropic-ratelimit-unified-{status,5h-utilization,5h-reset,7d-utilization,7d-reset}` on subscription replies; measured to survive a streamed pass-through and a 429 (architecture.md, spike). | v0.1 |
-| 2 | **Per-consumer weekly share** | One program can burn the week. | the owner | Private measurement: automation's subscription traffic, priced at API rates, is several times the owner's paid API spend over the same week. | v0.1 (measured), v0.2 (enforced) |
-| 3 | **Attribution under a coarse meter** | The header is account-wide and moves in steps of 1 point of the week; per-call deltas can't say who spent what. | the owner, any consumer reading its own share | Simulated week: per-call delta 5–32 points p95 error, token apportioning 0.5 when all use passes subgate, calibrated estimate 3.1–4.5 at any bypass level (ADR 0005). | v0.1 |
-| 4 | **The pace line** | A fixed weekly cap lets a program spend it all on day one. allowance(t) = share × elapsed ÷ 7 days; unused allowance carries forward because counters are cumulative. | the owner | The week resets at Anthropic's `7d-reset`, not a fixed weekday; read from the header. | v0.1 (gauge), v0.2 (gate) |
-| 5 | **States OK / OVER_PACE / LIMITED** | Consumers need one answer, not a calculation. LIMITED comes from a 429 or `status: rejected` and lasts until the reported reset. | consumers, dashboards | The 429 path carries the reset time (spike). | v0.1 (state), v0.2 (acts on it) |
-| 6 | **Action `hold`** | A program over its share should stop and say why, in a way its existing error handling understands. An Anthropic-shaped 429 with `retry-after` and `x-subgate: over-share` or `limited`. | automation with retry or failover logic | Claude Code reports `api_error_status: 429` on such a reply (spike); clients with error failover become pace-aware with no change. | v0.2 |
-| 7 | **Action `api`, with a daily dollar cap** | Some work must not wait. Move the call to the owner's paid API key, plan API credits first, under a daily cap past which it falls back to `hold`. | time-sensitive automation | Max plans include $100–200 a month of API credits that expire unused (legal.md, claim 12). | v0.2 |
-| 8 | **Action `cheap`** | Work that tolerates a smaller model should not stop. Same as `api`, with the `model` field rewritten. | background jobs (summaries, refreshes) | Private measurement: one background job already moved to a small model on its own. | v0.2 |
-| 9 | **The owner is measured, never gated, and fails open** | The owner's interactive sessions must never be blocked by their own tool, and must keep working when subgate is down. | the owner | Measuring the owner's traffic is what makes attribution accurate (ADR 0005 table). | v0.1 |
-| 10 | **Approval requests** | Going past the line should be the owner's decision, made in a moment: "+N% this week" or "N more runs". A held consumer gets an approval id; a grant expires at the week's reset. | the owner, via any front end | The orchestrator already holds starts and asks for approval on a subscription 429. | v0.3 |
-| 11 | **Runtime-editable limits, defaults in git** | Shares change mid-week; a redeploy to change a number is too slow. `PUT /v1/consumers/{name}` overrides the git file until cleared; the status shows the drift from git. | the owner, consoles | The orchestrator's console already edits server-kept options this way. | v0.2 (API), v0.3 (console) |
-| 12 | **Prometheus gauges and `/v1/status`** | Dashboards and admission logic (another program deciding whether to start a job) need the numbers. | Grafana, orchestrators | — | v0.1 |
-| 13 | **Audit log** | "Why was this held?" and "who raised the share?" need an answer after the fact. Append-only: state changes, actions taken, policy edits with the caller. | the owner | — | v0.2 |
-| 14 | **Ledger mode** | Pacing without being in the request path, for clients that can ask first, and as the fallback if the terms rule out a proxy (legal.md). `POST /v1/admit` before a job, usage from telemetry after. | orchestrators, the stop condition | Usage Policy line effective 2026-11-12 (legal.md, claim 3). | v0.3 |
-| 15 | **A second provider** | OpenAI and Codex plans have the same weekly-pool problem. Same engine, a new provider adapter. | other users | UNKNOWN which headers those plans expose; checked in that milestone. | after v0.3 |
+| 1 | **Collect the plan's own meter** from what clients already receive: `rate_limit_event` in run output, a `/usage` sampler, the owner's status line | The owner sees the weekly number only in the interactive status line; no program sees it. | every consumer, the owner | Documented by Anthropic (ADR 0012). | v0.1 |
+| 2 | **`subgate run`**: wrap any job to ask first and report after | Pacing must cost a script one word, not code. | any automation | — | v0.1 |
+| 3 | **Per-consumer weekly share** | One program can burn the week. | the owner | Private measurement: automation's subscription use, priced at API rates, is several times the owner's paid API spend over the same week. | v0.1 (measured), v0.2 (enforced) |
+| 4 | **Attribution under a coarse meter** | The meter is account-wide and moves in steps of one point of the week; before-and-after readings can't say who spent what. | the owner, any consumer | Simulated week: calibrated estimate 3.1–4.5 points p95 at any level of unreported use; apportioning 0.5 when everything is reported (ADR 0005). | v0.1 |
+| 5 | **The pace line** | A fixed weekly cap lets a program spend it all on day one. allowance(t) = share × elapsed ÷ 7 days; unused allowance carries forward. | the owner | The week resets at the meter's own `resets_at`, not a fixed weekday. | v0.1 (gauge), v0.2 (enforced) |
+| 6 | **States OK / OVER_PACE / LIMITED / STALE** | Consumers need one answer, not a calculation. | consumers, dashboards | A 429 reaches callers as `error: rate_limit` with a reset time. | v0.1 |
+| 7 | **Leases** | Ten jobs admitted at once can't all fit the same remaining share. An admitted job reserves its estimate until it reports. | parallel automation | — | v0.1 (recorded), v0.2 (counted in decisions) |
+| 8 | **Decision `hold`** | A program over its share should not start, and should know when to try again. `retry_after_s` and, from v0.3, an approval id; `subgate run` exits 75. | automation with retry logic | The author's orchestrator already holds starts on a subscription 429. | v0.2 |
+| 9 | **Decision `api`, with a daily dollar cap** | Some work must not wait. The client runs on its own API credential (plan API credits first), under a daily cap from its reported cost, past which the answer becomes `hold`. subgate holds no key. | time-sensitive automation | Max plans include $100–200 a month of API credits that expire unused (legal.md, claim 12). | v0.2 |
+| 10 | **Decision `cheap`** | Work that tolerates a smaller model shouldn't stop. Like `api`, with a model to use. | background jobs | Private measurement: one background job already moved to a small model on its own. | v0.2 |
+| 11 | **The owner is measured, never gated** | The owner's own sessions must never wait on their tool. They never call `admit`; the status line reporter has a 300 ms timeout. | the owner | Reporting the owner's use is what makes attribution accurate (ADR 0005 table). | v0.1 |
+| 12 | **Approval requests** | Going past the line should be the owner's decision, made in a moment: "+N% this week" or "N more jobs". A grant expires at the week's reset; a webhook reaches a phone, an assistant or a console. | the owner | — | v0.3 |
+| 13 | **Runtime-editable limits, defaults in git** | Shares change mid-week; a redeploy to change a number is too slow. `PUT /v1/consumers/{name}` overrides the file until cleared; the status shows the drift. | the owner, consoles | The orchestrator's console already edits server-kept options this way. | v0.2 (API), v0.3 (console) |
+| 14 | **Prometheus gauges and `/v1/status`** | Dashboards and other programs' admission logic need the numbers. | Grafana, orchestrators | — | v0.1 |
+| 15 | **Audit log** | "Why was this held?" and "who raised the share?" need an answer after the fact. | the owner | — | v0.2 |
+| 16 | **A second provider** | OpenAI and Codex plans have the same weekly-pool problem. Same engine, a new provider adapter. | other users | UNKNOWN where those plans expose their meter; checked in that milestone. | after v0.3 |
 
 ## Out of scope, and why
 
 | Not doing | Why |
 |---|---|
-| Hosting for other people, multiple owners, account pooling or rotation | Forbidden by the terms (legal.md); rotation is also what Anthropic enforces against. |
-| Storing or refreshing OAuth tokens, a login flow | subgate forwards the client's credential; holding it is the "intermediate credentials" line. |
-| Dollar budgets for subscription traffic | Subscription traffic isn't billed per token. Dollar caps apply only to the `api` and `cheap` fallbacks. |
-| Replacing a general LLM gateway (routing, keys for many providers, caching) | Bifrost and LiteLLM do that; subgate sits in front of one and holds no provider keys in the recommended setup (ADR 0003). |
-| Prompt or response logging | Not needed for metering; a privacy liability. Only token counts and model names are recorded. |
-| Rewriting client identity headers | The Usage Policy names "misrepresent the product or client" (legal.md, claim 3). |
+| A proxy or any transport in the request path | The Usage Policy line effective 2026-11-12 (legal.md, claim 3); the owner chose the ledger (ADR 0003, 0010). Reopened only if the terms clearly allow it. |
+| Hosting for other people, multiple owners, account pooling or rotation | Forbidden by the terms (legal.md). |
+| Holding any credential: OAuth tokens, API keys, gateway keys | Not needed: clients switch credential themselves. Holding one is the "intermediate credentials" line. |
+| Forcing a consumer that doesn't ask | Out of the request path, subgate can only see such use (as unreported) and say so. |
+| Dollar budgets for subscription use | It isn't billed per token. Dollar caps apply only to the `api` and `cheap` routes. |
+| Prompt or response logging | Only per-model usage and cost are recorded. |

@@ -1,6 +1,6 @@
 # 0001. Name and licence
 
-- Status: proposed
+- Status: accepted (owner, 2026-10-29)
 - Date: 2026-10-28
 
 ## Context
@@ -25,11 +25,11 @@ No USPTO or EUIPO search was made.
 
 ## Decision
 
-Name: **subgate**. Repository `Egoushka/subgate`, Go module `github.com/Egoushka/subgate`, binary `subgate`. Licence: MIT, like the author's other public libraries.
+Name: **subgate**. Repository `Egoushka/subgate`, binary `subgate`; package names follow ADR 0002. Licence: MIT, like the author's other public libraries.
 
 ## Consequences
 
-Container image `ghcr.io/egoushka/subgate`. A rename later costs a module-path change for every importer of the engine, so the name is settled before v0.1.
+Container image `ghcr.io/egoushka/subgate`. A rename later costs a package rename for every importer of the engine, so the name is settled before v0.1.
 
 ## Reopen if
 

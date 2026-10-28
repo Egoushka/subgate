@@ -1,23 +1,24 @@
-# 0006. Consumer identity: a hashed header, no secrets in config
+# 0006. Consumer identity: a bearer token per consumer, stored as a hash
 
 - Status: proposed
-- Date: 2026-10-28
+- Date: 2026-10-29
 
 ## Context
 
-Every consumer sends the same OAuth token (one owner, one login), so the token can't say who is calling. Behind a gateway, each consumer already sends its own gateway key (Bifrost: `x-bf-vk`). Without a gateway there is no per-consumer header unless the client adds one; Claude Code can, with `ANTHROPIC_CUSTOM_HEADERS`.
+Every consumer runs on the same login, so the login can't say who is calling. The ledger (ADR 0003) sees only its own API calls: admit, usage, signal.
 
 ## Decision
 
-- The identity header is configurable: `x-bf-vk` behind Bifrost, `x-subgate-consumer` by default.
-- The config lists consumers by `sha256(header value)`, so the config file and the public repo hold no secret. `subgate hash <value>` prints the hash.
-- An unknown or missing identity maps to the `owner` consumer: measured, never gated (ADR 0008). Reason: the safe failure for the owner is pass-through, and automation is configured on purpose.
-- The header is forwarded unchanged (the gateway needs it) and never logged.
+- Each consumer gets a random bearer token for subgate's API. The config lists consumers by name with `sha256(token)`, so the config file and the public repo hold no secret. `subgate token new <name>` prints a token and its hash.
+- `subgate sample` uses a `signal` token, which may post signals and nothing else.
+- `subgate statusline` uses the `owner` consumer's token: it posts signals and the owner's session use.
+- The owner is a consumer named `owner`: its reports are measured, and `admit` always answers `allow` for it.
+- Tokens are compared in fixed time and never logged.
 
 ## Consequences
 
-A consumer that forgets its header is counted as the owner: it can't be gated, and the owner's share looks larger. `subgate_requests_total{consumer="owner"}` with a `user_agent` label split lets the owner spot it.
+A consumer without a token can't report, so its use counts as untracked (ADR 0005). Tokens are subgate's own and give no access to Anthropic.
 
 ## Reopen if
 
-A deployment needs unknown callers rejected rather than passed (add `unknown: reject`).
+A deployment needs identities from an existing system (mTLS, an SSO header).

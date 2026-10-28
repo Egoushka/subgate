@@ -1,50 +1,40 @@
 # 0002. Language and runtime
 
-- Status: proposed (the three-way benchmark is running; this ADR is final when its table is filled)
-- Date: 2026-10-28
+- Status: proposed. Reopened 2026-10-29: the ledger-first decision (ADR 0003) removed the reasons Go was picked.
+- Date: 2026-10-29
 
 ## Context
 
-subgate is a streaming reverse proxy: it forwards server-sent events unbuffered, parses usage from them on the side, and ships as one binary or container next to an LLM gateway. What matters: added latency to the first byte, memory at rest, throughput, a static build, and how much proxy code the standard library already gives.
+Go was picked for a streaming proxy: the standard library has one, and the gateway it sat in front of (Bifrost) is Go. Out of the request path, subgate is a low-rate HTTP service (a few calls per job), a client CLI that wraps each job, a sampler and a status-line command. What matters now: memory at rest, binary size, cold start of the CLI (it runs per job and per status-line refresh), cross-platform builds (macOS and Linux), and reuse with the author's other code.
 
 ## Evidence
 
-**Spike (2026-10-28), Go `httputil.ReverseProxy` with a streaming usage tap**, against a local mock, 2000 requests, 20 concurrent, warm:
+Run 1 of a three-way benchmark (2026-10-29): the same streaming proxy with a usage tap in each language, against an SSE mock, on Linux arm64 (4 cores, in a VM on the author's laptop), loopback. Preliminary: the Go tap missed 0.8% of output tokens and logged connection errors, and Rust's total latency (~42 ms against ~1.3 ms to first byte) points to a socket setting. Both are harness bugs that hurt latency and throughput, so those columns are shown but don't decide anything.
 
-| | direct to mock | through the Go proxy |
-|---|---|---|
-| time to first byte p50 | 3.6 ms | 5.1 ms |
-| time to first byte p95 | 4.8 ms | 7.8 ms |
-| total p95 | 5.2 ms | 8.6 ms |
-| RSS | — | 33 MB |
-
-A model's first token takes 1–3 s, so +3 ms p95 is under 0.3% of it.
-
-**Three-way benchmark (pending)**: the same proxy and mock in Go, Rust (hyper) and .NET 10 Native AOT (Kestrel), measuring added time to first byte p50/p95, total p95, requests per second at 20 and 200 concurrent, steady RSS, binary size and cold start.
-
-| | Go | Rust | .NET 10 Native AOT |
+| | Go | .NET 10 Native AOT | Rust (hyper) |
 |---|---|---|---|
-| added TTFB p50 / p95 | | | |
-| total p95 | | | |
-| req/s at 20 / 200 | | | |
-| RSS | | | |
-| binary | | | |
-| cold start | | | |
+| RSS idle / after load | 6 / 32 MB | 21 / 43 MB | 3 / 21 MB |
+| binary | 6.1 MB | 14 MB | 1.4 MB |
+| cold start (median of 5) | 11 ms | 83 ms | 5.5 ms |
+| added time to first byte p95, 20 concurrent | ~3 ms (harness bug) | ~0.3 ms | ~2.5 ms (harness bug) |
+| requests per second, 20 / 200 concurrent | 9.3k / 15.3k (harness bug) | 17.7k / 23.2k | 0.6k / 10.6k (harness bug) |
+
+At a ledger's rate (well under 10 requests per second) every column but memory, size and cold start is irrelevant.
 
 ## Options
 
-1. **Go.** Streaming reverse proxy in the standard library; static binary; the gateway it sits in front of (Bifrost) is Go, so a later move into a plugin is a port, not a rewrite.
-2. **Rust.** Likely the lowest RSS and tail latency. No toolchain on the author's machine today; more code for the same proxy.
-3. **.NET 10 Native AOT.** The author's main stack; YARP is a strong proxy. AOT binaries are larger, and the shared .NET libraries (switchknife) have nothing for this job yet.
+1. **Go.** Small, fast cold start, trivial cross-compiles. Doesn't match the author's other services any more (they are .NET), and the shared library set (switchknife) can't take a Go engine.
+2. **.NET 10 Native AOT.** The author's main stack; the engine can be a switchknife package that the orchestrator (also .NET) can use in-process for its own admission logic or tests. Costs 15 MB more memory, 8 MB more binary, about 70 ms more cold start per CLI call, and AOT builds per OS (a CI matrix, no cross-compiles).
+3. **Rust.** Smallest on every measure; no toolchain on the author's machine and no other Rust code to share with.
 
 ## Decision
 
-Go, unless the benchmark shows another option at least 2× better on p95 added latency or RSS at equal throughput. Either margin would still be a small share of first-token time, so the bar for switching is deliberately high.
+Proposed: **.NET 10 Native AOT**, with the engine as a switchknife package (`Switchknife.Pace`, ADR 0004). The costs are small for this job: 70 ms on a CLI that wraps runs of seconds to minutes, and 21 MB at rest on a server. What it buys is one stack for the author's services and a reusable engine in the shared library set. Go remains a sound choice if the owner prefers the smaller binary; the docs and checks are written to be language-neutral until this is accepted.
 
 ## Consequences
 
-One static binary, `CGO_ENABLED=0`; SQLite through a pure-Go driver (ADR 0009).
+The service and the CLI are one AOT binary per OS. CI builds on Linux and macOS runners (ADR 0011). SQLite through `Microsoft.Data.Sqlite` with the bundled native library.
 
 ## Reopen if
 
-A deployment runs at hundreds of concurrent streams where RSS or tail latency starts to matter, or the engine needs to run inside a .NET program.
+The status-line command's cold start becomes visible to the owner (it runs on every assistant message), or a proxy transport comes back (ADR 0010).
