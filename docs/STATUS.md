@@ -14,8 +14,8 @@ Phase 0 (design). Worker and session ids are kept in the owner's private notes, 
 | 2026-10-29 | Own CI on GitHub-hosted runners (ADR 0011) | owner |
 | 2026-10-29 | .NET 10 Native AOT; the engine is `Switchknife.Pace` in switchknife (ADR 0002, 0004) | owner |
 | 2026-10-29 | v0.1 spec approved, spike S1 first | owner |
+| 2026-10-29 | S1 passed: `/usage` gives the meters at $0; run events carry both windows in an undocumented `unifiedWindows` (ADR 0012) | lead |
 
 ## Next
 
-1. Spike S1 (`scripts/spike-s1.sh`). If it fails, stop and report before building.
-2. v0.1 issues per the spec's work split, at most 3 open PRs at once.
+1. v0.1 issues per the spec's work split, at most 3 open PRs at once.
