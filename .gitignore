@@ -1,0 +1,8 @@
+/bin/
+/dist/
+*.db
+*.db-wal
+*.db-shm
+config.local.yaml
+.env
+.private-terms
