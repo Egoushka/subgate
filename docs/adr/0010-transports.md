@@ -1,6 +1,6 @@
 # 0010. Two transports over one engine: proxy now, ledger as the fallback
 
-- Status: proposed
+- Status: accepted (owner, 2026-10-29)
 - Date: 2026-10-28
 
 ## Context
