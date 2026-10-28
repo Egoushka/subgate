@@ -19,7 +19,7 @@ Option 3 for v0.1, with the same pinning rules as the shared repository (actions
 
 ## Consequences
 
-The pre-commit config is the shared template; its .NET hook stays if ADR 0002 picks .NET. Renovate runs from the shared preset if the public repo may read it; otherwise its config is inline.
+The pre-commit config is the shared template, .NET hook included. Native AOT builds per OS, so CI builds on Linux and macOS runners. Renovate runs from the shared preset if the public repo may read it; otherwise its config is inline.
 
 ## Reopen if
 

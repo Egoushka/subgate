@@ -12,9 +12,9 @@ Phase 0 (design). Worker and session ids are kept in the owner's private notes, 
 | 2026-10-29 | Ledger first: no request path; the proxy is off the roadmap (ADR 0003, 0010) | owner |
 | 2026-10-29 | Name subgate (ADR 0001) | owner |
 | 2026-10-29 | Own CI on GitHub-hosted runners (ADR 0011) | owner |
+| 2026-10-29 | .NET 10 Native AOT; the engine is `Switchknife.Pace` in switchknife (ADR 0002, 0004) | owner |
 
 ## Waiting on the owner
 
-1. Language: .NET 10 Native AOT with the engine in switchknife, or Go (ADR 0002, 0004).
-2. Approve the v0.1 spec (specs/v0.1.md), including the S1 spike that runs first.
-3. Whether the plan's monthly API credits are linked to a Console organisation, and which Max tier: changes the `api` decision's economics (v0.2).
+1. Approve the v0.1 spec (specs/v0.1.md), including the S1 spike that runs first.
+2. Whether the plan's monthly API credits are linked to a Console organisation, and which Max tier: changes the `api` decision's economics (v0.2).

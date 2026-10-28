@@ -1,6 +1,6 @@
 # 0002. Language and runtime
 
-- Status: proposed. Reopened 2026-10-29: the ledger-first decision (ADR 0003) removed the reasons Go was picked.
+- Status: accepted (owner, 2026-10-29). Reopened the same day: the ledger-first decision (ADR 0003) removed the reasons Go was picked.
 - Date: 2026-10-29
 
 ## Context
@@ -29,7 +29,7 @@ At a ledger's rate (well under 10 requests per second) every column but memory, 
 
 ## Decision
 
-Proposed: **.NET 10 Native AOT**, with the engine as a switchknife package (`Switchknife.Pace`, ADR 0004). The costs are small for this job: 70 ms on a CLI that wraps runs of seconds to minutes, and 21 MB at rest on a server. What it buys is one stack for the author's services and a reusable engine in the shared library set. Go remains a sound choice if the owner prefers the smaller binary; the docs and checks are written to be language-neutral until this is accepted.
+**.NET 10 Native AOT**, with the engine as a switchknife package (`Switchknife.Pace`, ADR 0004). The costs are small for this job: 70 ms on a CLI that wraps runs of seconds to minutes, and 21 MB at rest on a server. What it buys is one stack for the author's services and a reusable engine in the shared library set. Go was the alternative, for the smaller binary and faster cold start.
 
 ## Consequences
 

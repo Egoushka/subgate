@@ -1,6 +1,6 @@
 # 0004. The engine is a library with no I/O
 
-- Status: proposed
+- Status: accepted (owner, 2026-10-29)
 - Date: 2026-10-29
 
 ## Context
@@ -22,7 +22,7 @@ Components, dependencies pointing down only:
 
 The engine has a property test and a simulation test (the attribution target, ADR 0005) that run without a network or a disk.
 
-**Where the engine lives** follows ADR 0002: with .NET, it is a switchknife package (`Switchknife.Pace`, its own NuGet version, no dependencies, AOT-clean) and subgate references it; with Go, it is a package in this repository, split into its own module when a second program imports it.
+**Where the engine lives.** In switchknife, the author's public MIT .NET libraries, as `Switchknife.Pace`: its own NuGet version (tag `pace/v<x>`), no dependencies beyond the base library, AOT-clean, following switchknife's package rules. subgate references the package; the other components live in this repository. Until the first `pace/v0.1.0` release, subgate may reference the project from a local switchknife checkout.
 
 ## Consequences
 

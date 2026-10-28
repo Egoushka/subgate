@@ -29,3 +29,11 @@ repos:
     hooks:
       - id: hadolint-docker   # runs in Docker; switch to "hadolint" if the binary is installed
 
+  # .NET repos only: formats staged C# files (whitespace + code style).
+  - repo: local
+    hooks:
+      - id: dotnet-format
+        name: dotnet format
+        language: system
+        entry: bash -c 'dotnet format --include "$@" --verbosity quiet' --
+        types_or: [c#]

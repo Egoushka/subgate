@@ -39,9 +39,9 @@ Between jobs, `subgate sample` keeps the meter fresh by running `/usage` on the 
 | ADR | Decision | Status |
 |---|---|---|
 | [0001](adr/0001-name-and-license.md) | Name subgate, MIT | accepted |
-| [0002](adr/0002-language-and-runtime.md) | .NET 10 Native AOT proposed (Go was picked for a proxy that no longer exists) | proposed |
+| [0002](adr/0002-language-and-runtime.md) | .NET 10 Native AOT | accepted |
 | [0003](adr/0003-where-it-sits.md) | Out of the request path: a ledger | accepted |
-| [0004](adr/0004-engine-library.md) | The engine is an I/O-free library; with .NET, a switchknife package | proposed |
+| [0004](adr/0004-engine-library.md) | The engine is an I/O-free library, `Switchknife.Pace` | accepted |
 | [0005](adr/0005-attribution.md) | Apportion by reported use, calibrate when some is unreported; target ≤ 5 points p95 | proposed |
 | [0006](adr/0006-consumer-identity.md) | A bearer token per consumer, stored as a hash | proposed |
 | [0007](adr/0007-control-api.md) | Admit, report, signal, leases; consoles are clients | proposed |

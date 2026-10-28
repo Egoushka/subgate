@@ -1,6 +1,6 @@
 # CLAUDE.md — subgate
 
-A ledger that paces each consumer's weekly share of one AI subscription: consumers ask before a job and report after; subgate is never in the request path. Public repository. Phase 0: docs only; code starts on the owner's OK of `docs/specs/v0.1.md`.
+A .NET 10 Native AOT ledger that paces each consumer's weekly share of one AI subscription: consumers ask before a job and report after; subgate is never in the request path. Public repository. Phase 0: docs only; code starts on the owner's OK of `docs/specs/v0.1.md`.
 
 ## Public vs private — the rule for every file
 
@@ -9,7 +9,7 @@ Never commit: hostnames, IP or tailnet addresses, gateway key names, token hashe
 ## Rules
 
 - Decisions: `docs/adr/NNNN-title.md` from `docs/adr/template.md`, with evidence or UNKNOWN.
-- The engine does no I/O and takes the clock as a parameter (ADR 0004).
+- The engine is `Switchknife.Pace` in the switchknife repository; it does no I/O and takes a `TimeProvider` (ADR 0004).
 - subgate never accepts, stores or logs a provider credential, and never proxies a request (ADR 0003, docs/legal.md).
 - Every acceptance check in a spec names a command and an expected result, and can fail.
 - Commits: Conventional Commits; squash-merge; release-please makes every feature a patch.
