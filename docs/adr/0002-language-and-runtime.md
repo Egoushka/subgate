@@ -9,7 +9,7 @@ Go was picked for a streaming proxy: the standard library has one, and the gatew
 
 ## Evidence
 
-Run 1 of a three-way benchmark (2026-10-29): the same streaming proxy with a usage tap in each language, against an SSE mock, on Linux arm64 (4 cores, in a VM on the author's laptop), loopback. Preliminary: the Go tap missed 0.8% of output tokens and logged connection errors, and Rust's total latency (~42 ms against ~1.3 ms to first byte) points to a socket setting. Both are harness bugs that hurt latency and throughput, so those columns are shown but don't decide anything.
+Run 1 of a three-way benchmark (2026-10-29), preliminary and superseded: the benchmark measured a proxy that will not be built (ADR 0010), and its re-run was cancelled. It is kept for the memory, binary-size and cold-start columns. The same streaming proxy with a usage tap in each language, against an SSE mock, on Linux arm64 (4 cores, in a VM on the author's laptop), loopback. Preliminary: the Go tap missed 0.8% of output tokens and logged connection errors, and Rust's total latency (~42 ms against ~1.3 ms to first byte) points to a socket setting. Both are harness bugs that hurt latency and throughput, so those columns are shown but don't decide anything.
 
 | | Go | .NET 10 Native AOT | Rust (hyper) |
 |---|---|---|---|

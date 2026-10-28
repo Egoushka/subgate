@@ -13,8 +13,9 @@ Phase 0 (design). Worker and session ids are kept in the owner's private notes, 
 | 2026-10-29 | Name subgate (ADR 0001) | owner |
 | 2026-10-29 | Own CI on GitHub-hosted runners (ADR 0011) | owner |
 | 2026-10-29 | .NET 10 Native AOT; the engine is `Switchknife.Pace` in switchknife (ADR 0002, 0004) | owner |
+| 2026-10-29 | v0.1 spec approved, spike S1 first | owner |
 
-## Waiting on the owner
+## Next
 
-1. Approve the v0.1 spec (specs/v0.1.md), including the S1 spike that runs first.
-2. Whether the plan's monthly API credits are linked to a Console organisation, and which Max tier: changes the `api` decision's economics (v0.2).
+1. Spike S1 (`scripts/spike-s1.sh`). If it fails, stop and report before building.
+2. v0.1 issues per the spec's work split, at most 3 open PRs at once.
