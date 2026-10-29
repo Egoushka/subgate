@@ -1,6 +1,6 @@
 # 0013. The plan is published; a gateway writer is a separate adapter
 
-- Status: proposed
+- Status: accepted (owner, 2026-10-29), amended the same day: the adapter is not built
 - Date: 2026-10-29
 
 ## Context
@@ -23,6 +23,10 @@ Option 2. The allocator lives in the engine (ADR 0004) and produces the plan; th
 - The primary split between subscription and API is made at the client, per job, from the plan. Gateway weights apply only to traffic already on API credentials, for consumers marked `weights_ok`.
 - The plan expires (`valid_until`), which a gateway weight cannot; a dead controller is detected and clients fall to `on_stale`.
 - The adapter is the only component that needs a gateway credential. The owner decides whether it counts as "outside subgate" under legal.md or whether the wording changes.
+
+## Amendment, 2026-10-29: no gateway writer
+
+The owner chose to build the ledger with `hold` and `GET /v1/plan` and **no gateway adapter**: the weight controller would save $0 against the subscription-first policy in use (the spec's benchmark: reactive is cheapest in dollars at every size) and buys only the owner's availability, which the plan's `hold` and its `valid_until` already give. So option 2 stands without its adapter: subgate publishes the plan, clients apply it per job, and no component holds a gateway credential. Spikes W-S1 to W-S4 and W-S6, checks W11 to W14, WC4's adapter gauge, D-W5 and D-W6 and the spec's work-split item 4 are dropped, not failed. The adapter comes back only if a caller that cannot ask subgate needs it and the owner says so; then these checks apply as written.
 
 ## Reopen if
 
