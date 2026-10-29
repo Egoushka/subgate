@@ -2,7 +2,7 @@
 # Publishes the Native AOT binary (ADR 0002) on the SDK image, then runs it on a
 # minimal runtime-deps base. The push to ghcr.io/egoushka/subgate belongs to #6.
 
-ARG DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0
+ARG DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0-noble-aot
 ARG DOTNET_RUNTIME_DEPS_IMAGE=mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled
 
 FROM ${DOTNET_SDK_IMAGE} AS build
