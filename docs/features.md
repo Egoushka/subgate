@@ -24,6 +24,7 @@ Versions: v0.1 is signal only (observe), v0.2 enforcement and actions, v0.3 appr
 | 14 | **Prometheus gauges and `/v1/status`** | Dashboards and other programs' admission logic need the numbers. | Grafana, orchestrators | — | v0.1 |
 | 15 | **Audit log** | "Why was this held?" and "who raised the share?" need an answer after the fact. | the owner | — | v0.2 |
 | 16 | **A second provider** | OpenAI and Codex plans have the same weekly-pool problem. Same engine, a new provider adapter. | other users | UNKNOWN where those plans expose their meter; checked in that milestone. | after v0.3 |
+| 17 | **The plan**: per-consumer fractions to the subscription, a cheaper model, the API or a wait, smoothed and expiring | Moving each job by hand is slow; a gateway weight can't see subscription calls and has no expiry. subgate publishes what share of each consumer's work goes where. Clients draw per job; an optional adapter writes a gateway's weights. | automation, orchestrators | Simulation: smoothing cuts weight writes by 90–98% (v0.2 spec). | v0.2 |
 
 ## Out of scope, and why
 
