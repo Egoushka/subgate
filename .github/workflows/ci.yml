@@ -45,6 +45,33 @@ jobs:
       - run: dotnet publish src/Subgate/Subgate.csproj -c Release -r ${{ matrix.rid }} -warnaserror -o out
       - run: out/Subgate --version
 
+  # acceptance/ holds the specs' local-call tables as hurl files (scripts/smoke.sh). Advisory until `subgate serve` ships (cycle 2): the smoke step may fail without failing the job; the PR that completes the cycle removes continue-on-error from it.
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+      - name: Install hurl (pinned by SHA-256)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP"
+          curl -sSfLo hurl.tgz https://github.com/Orange-OpenSource/hurl/releases/download/8.1.0/hurl-8.1.0-x86_64-unknown-linux-gnu.tar.gz
+          echo "b497e7ab328100c507f1f3323ebe7cc5990d831ae4f9473b74d40b02971da4ca  hurl.tgz" | sha256sum -c -
+          tar -xzf hurl.tgz --strip-components=2 -C bin hurl-8.1.0-x86_64-unknown-linux-gnu/bin/hurl
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - run: dotnet publish src/Subgate/Subgate.csproj -c Release -r linux-x64 -o out
+      - run: scripts/smoke.sh
+        continue-on-error: true
+        env:
+          SUBGATE_CONSUMER_TOKEN: example-consumer-token-0001
+          SUBGATE_SIGNAL_TOKEN: example-signal-token-0001
+
   container:
     runs-on: ubuntu-latest
     timeout-minutes: 20
