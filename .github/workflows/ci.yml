@@ -1,0 +1,89 @@
+name: ci
+
+# ADR 0011: own CI on GitHub-hosted runners. pull_request (never pull_request_target), so a fork's pull request
+# runs with no secrets and a read-only token.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore subgate.slnx
+      - run: dotnet format subgate.slnx --verify-no-changes --no-restore
+      - run: dotnet build subgate.slnx -c Release --no-restore
+      - run: scripts/check.sh
+      # I2: Native AOT with no trim or AOT warnings, and the binary runs.
+      - run: dotnet publish src/Subgate/Subgate.csproj -c Release -r ${{ matrix.rid }} -warnaserror -o out
+      - run: out/Subgate --version
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker build -t subgate:ci .
+      - run: docker run --rm subgate:ci --version
+
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install scanners (pinned by SHA-256)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          cd "$RUNNER_TEMP"
+          curl -sSfLo gitleaks.tgz https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  gitleaks.tgz" | sha256sum -c -
+          tar -xzf gitleaks.tgz -C bin gitleaks
+          curl -sSfLo actionlint.tgz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tgz" | sha256sum -c -
+          tar -xzf actionlint.tgz -C bin actionlint
+          curl -sSfLo bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64
+          echo "160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b  bin/osv-scanner" | sha256sum -c -
+          chmod +x bin/*
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: H1 gitleaks
+        run: gitleaks git --redact --no-banner
+      - name: H2 private terms
+        # A fork's pull request has no secrets, so the list is missing there; maintainers' runs always check.
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          PRIVATE_TERMS: ${{ secrets.PRIVATE_TERMS }}
+        run: scripts/private-terms-check.sh
+      - name: H3 example hashes
+        run: scripts/example-hashes.sh
+      - name: actionlint
+        run: actionlint
+      - name: osv-scanner
+        run: osv-scanner scan source --recursive .
