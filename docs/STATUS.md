@@ -1,6 +1,6 @@
 # Status
 
-Phase 0 (design). Worker and session ids are kept in the owner's private notes, not here.
+Phase 0 (design) with v0.1 code under way: the provider parsers are in review (#9) and the engine `Switchknife.Pace` is merged in the switchknife repository (#36, #37; cycle 1, 2026-10-29), unreleased. Worker and session ids are kept in the owner's private notes, not here.
 
 ## Decisions
 
@@ -15,8 +15,13 @@ Phase 0 (design). Worker and session ids are kept in the owner's private notes, 
 | 2026-10-29 | .NET 10 Native AOT; the engine is `Switchknife.Pace` in switchknife (ADR 0002, 0004) | owner |
 | 2026-10-29 | v0.1 spec approved, spike S1 first | owner |
 | 2026-10-29 | v0.2 weight-controller spec proposed: the plan is published, a gateway writer is an optional separate adapter (ADR 0013) | lead |
+| 2026-10-29 | Build v0.1 as a ledger with `hold` and `GET /v1/plan`; no gateway writer (ADR 0013 amended, v0.2 spec cycle plan re-cut) | owner |
 | 2026-10-29 | S1 passed: `/usage` gives the meters at $0; run events carry both windows in an undocumented `unifiedWindows` (ADR 0012) | lead |
 
 ## Next
 
-1. v0.1 issues per the spec's work split, at most 3 open PRs at once.
+Cycle plan: [v0.2 spec](specs/v0.2-weight-controller.md#cycle-plan).
+
+1. Cycle 1, done 2026-10-29: `Switchknife.Pace` engine and attribution (switchknife#32, #33; merged as #36, #37). T1 to T6, T16, T19 and the attribution simulation T3 pass in its CI. Open: tag `pace/v0.1.0` (its publish to nuget.org waits for the owner's approval in the release environment).
+2. Cycle 2: subgate on the engine: parsers (#9, #3), store, policy, observe-mode API (#4), CLI (#5). Needs `pace/v0.1.0` on nuget.org.
+3. Release-please needs the `egoushka-release` App on this repository and its private key as a secret (owner).

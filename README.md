@@ -5,7 +5,7 @@
 > [!IMPORTANT]
 > subgate is independent software, not affiliated with or endorsed by Anthropic. Run it yourself, for your own subscription, on your own login, for your own programs. Never host it for other people or share a subscription through it. Whether your use complies with Anthropic's Consumer Terms and Usage Policy is yours to check; see [docs/legal.md](docs/legal.md).
 
-**Status: design.** No code yet. The plan is in [docs/](docs/): what it does and why ([features](docs/features.md)), how ([architecture](docs/architecture.md) and its [ADRs](docs/adr/)), the first version's [spec](docs/specs/v0.1.md), and the [roadmap](docs/roadmap.md).
+**Status: design, code starting.** The engine (`Switchknife.Pace`, in the switchknife repository) is merged and the provider parsers are in review; nothing is released or deployable yet. The plan is in [docs/](docs/): what it does and why ([features](docs/features.md)), how ([architecture](docs/architecture.md) and its [ADRs](docs/adr/)), the first version's [spec](docs/specs/v0.1.md), and the [roadmap](docs/roadmap.md).
 
 ## Why
 

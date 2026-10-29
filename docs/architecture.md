@@ -50,7 +50,7 @@ Between jobs, `subgate sample` keeps the meter fresh by running `/usage` on the 
 | [0010](adr/0010-transports.md) | Ledger first; the proxy is off the roadmap | accepted |
 | [0011](adr/0011-ci-for-a-public-repo.md) | Own CI on GitHub-hosted runners | accepted |
 | [0012](adr/0012-signal-sources.md) | Signal from the clients' own output, a `/usage` sampler and the status line | proposed |
-| [0013](adr/0013-plan-and-gateway-adapter.md) | The plan is published; a gateway writer is a separate adapter | proposed |
+| [0013](adr/0013-plan-and-gateway-adapter.md) | The plan is published; no gateway writer is built (adapter deferred) | accepted |
 
 ## Facts this design rests on
 
