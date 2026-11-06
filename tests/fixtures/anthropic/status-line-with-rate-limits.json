@@ -1,0 +1,8 @@
+{
+  "session_id": "session-placeholder",
+  "cost": { "total_cost_usd": 0.4 },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 42.0, "resets_at": "2026-10-29T12:00:00Z" },
+    "seven_day": { "used_percentage": 10.0, "resets_at": "2026-11-05T00:00:00Z" }
+  }
+}

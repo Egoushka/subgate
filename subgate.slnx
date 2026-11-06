@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Subgate/Subgate.csproj" />
+    <Project Path="src/Subgate.Providers.Anthropic/Subgate.Providers.Anthropic.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Subgate.Tests/Subgate.Tests.csproj" />
+    <Project Path="tests/Subgate.Providers.Anthropic.Tests/Subgate.Providers.Anthropic.Tests.csproj" />
   </Folder>
 </Solution>

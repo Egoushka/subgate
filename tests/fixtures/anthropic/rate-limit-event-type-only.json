@@ -1,0 +1,9 @@
+{
+  "type": "rate_limit_event",
+  "rate_limit_info": {
+    "status": "allowed_warning",
+    "rateLimitType": "seven_day",
+    "resetsAt": 1700500000,
+    "utilization": 0.81
+  }
+}
