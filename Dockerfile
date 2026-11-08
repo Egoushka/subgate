@@ -22,6 +22,8 @@ RUN case "$TARGETARCH" in \
     esac > /tmp/rid
 RUN dotnet restore src/Subgate/Subgate.csproj -r "$(cat /tmp/rid)"
 
+RUN mkdir /data
+
 COPY src/Subgate/ src/Subgate/
 RUN dotnet publish src/Subgate/Subgate.csproj \
       -c Release \
@@ -34,4 +36,8 @@ WORKDIR /app
 COPY --from=build /app/publish/Subgate ./subgate
 # Microsoft.Data.Sqlite loads its native library from beside the binary.
 COPY --from=build /app/publish/libe_sqlite3.so ./
+# The state directory: the config's `state:` points inside it (e.g. /data/subgate.db) and a volume mounts over it.
+# The image has no shell, so the directory is made in the build stage and handed to the runtime user (uid 1654).
+COPY --from=build --chown=1654:1654 /data /data
+EXPOSE 8070
 ENTRYPOINT ["/app/subgate"]

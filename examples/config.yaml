@@ -1,0 +1,31 @@
+# A working config with placeholder tokens (see README.md); never use these tokens anywhere real.
+# Generate real ones with `subgate token new` and keep that config in a private repository.
+listen: 127.0.0.1:8070          # loopback; to publish a port from a container, listen on 0.0.0.0 and bind the host side to an interface you trust
+state: subgate.db               # SQLite file; mount a volume here in a container
+mode: observe                   # v0.1 always answers allow; "would" in the answer says what enforce mode would do
+owner: you                      # never gated; measured, not held (it still needs a token for its status line)
+stale_after: 6h
+lease_ttl: 2h
+quiet_hours:                    # the owner is idle: the meter's rises come from reporting consumers, and k is fitted from them
+  start: "00:00"
+  end: "08:00"
+  timezone: UTC                 # an IANA name needs tzdata on the host; UTC and UTC+02:00 style offsets always work
+
+signal:
+  token_sha256: "9675365e1d2f82000357d924fd38e2c4355609b903fd478f618f3d62ce947efa"   # gitleaks:allow (a placeholder, see README.md)
+
+# Shares are percentages of the weekly meter; what the consumers leave unclaimed (here 5) is the reserve.
+consumers:
+  - name: you
+    share: 40
+    token_sha256: "0e4b55e312f8fe4fc1fed47fe076a96f93fb784a80023683b7d8ad6d6a50cf1e"   # gitleaks:allow (a placeholder, see README.md)
+  - name: example-job
+    share: 45
+    action: api                 # what enforce mode answers when over pace: hold, api or cheap
+    on_stale: hold
+    token_sha256: "6f5e9ff8f4d81eb750d1219baa2b6c9bd73b618b0e5760bf1d90b784fc9013ac"   # gitleaks:allow (a placeholder, see README.md)
+  - name: example-automation
+    share: 10
+    action: hold
+    on_stale: hold
+    token_sha256: "ecb868bb70b717cc3bba394de9bdbf7e7f3aeb6c17cbaad35003156c59096385"   # gitleaks:allow (a placeholder, see README.md)
