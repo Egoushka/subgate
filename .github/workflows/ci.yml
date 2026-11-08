@@ -49,7 +49,8 @@ jobs:
 
   # acceptance/ holds the specs' local-call tables as hurl files (scripts/smoke.sh); scripts/bench.sh is B2 against the same binary.
   acceptance:
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: the pinned hurl binary links libxml2.so.2, which Ubuntu 26.04 no longer ships.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
