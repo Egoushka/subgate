@@ -321,7 +321,7 @@ public static class ConfigLoader
         return weights;
     }
 
-    private static bool IsName(string name) =>
+    internal static bool IsName(string name) =>
         name.Length is > 0 and <= 64 && name.All(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-');
 
     private static bool IsHostAndPort(string listen)

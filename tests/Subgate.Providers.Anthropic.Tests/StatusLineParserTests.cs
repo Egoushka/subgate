@@ -30,4 +30,19 @@ public class StatusLineParserTests
         Assert.Equal("session-placeholder", result.OwnerUsage.SessionId);
         Assert.Equal(0.1, result.OwnerUsage.TotalCostUsd);
     }
+
+    [Fact]
+    public void Reads_resets_at_as_Unix_epoch_seconds_and_ignores_the_spend_limit()
+    {
+        var json = Fixtures.Load("status-line-unix-resets-at.json");
+
+        var result = StatusLineParser.Parse(json);
+
+        Assert.Equal(2, result.Windows.Count);
+        var fiveHour = Assert.Single(result.Windows, w => w.Window == Window.FiveHour);
+        Assert.Equal(0.235, fiveHour.Utilization, 6);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1738425600), fiveHour.ResetsAt);
+        var sevenDay = Assert.Single(result.Windows, w => w.Window == Window.SevenDay);
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1738857600), sevenDay.ResetsAt);
+    }
 }

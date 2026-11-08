@@ -15,6 +15,7 @@ COPY external/pace.ref external/pace.ref
 COPY scripts/fetch-pace.sh scripts/fetch-pace.sh
 RUN scripts/fetch-pace.sh
 COPY src/Subgate/Subgate.csproj src/Subgate/
+COPY src/Subgate.Providers.Anthropic/Subgate.Providers.Anthropic.csproj src/Subgate.Providers.Anthropic/
 RUN case "$TARGETARCH" in \
       amd64) echo linux-x64 ;; \
       arm64) echo linux-arm64 ;; \
@@ -25,6 +26,7 @@ RUN dotnet restore src/Subgate/Subgate.csproj -r "$(cat /tmp/rid)"
 RUN mkdir /data
 
 COPY src/Subgate/ src/Subgate/
+COPY src/Subgate.Providers.Anthropic/ src/Subgate.Providers.Anthropic/
 RUN dotnet publish src/Subgate/Subgate.csproj \
       -c Release \
       -r "$(cat /tmp/rid)" \

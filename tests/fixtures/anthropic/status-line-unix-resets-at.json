@@ -1,0 +1,10 @@
+{
+  "session_id": "session-placeholder",
+  "model": { "id": "model-a", "display_name": "Model A" },
+  "cost": { "total_cost_usd": 0.4 },
+  "rate_limits": {
+    "five_hour": { "used_percentage": 23.5, "resets_at": 1738425600 },
+    "seven_day": { "used_percentage": 41.2, "resets_at": 1738857600 },
+    "spend_limit": { "used_percentage": 62.8, "resets_at": 1740787200, "period": "monthly" }
+  }
+}

@@ -35,6 +35,9 @@ internal sealed class ApiHost : IAsyncDisposable
 
     public HttpClient Client { get; }
 
+    /// <summary>The in-memory transport the CLI commands use in tests, in place of a network.</summary>
+    public HttpMessageHandler CreateHandler() => _app.GetTestServer().CreateHandler();
+
     public PersistentLedger Ledger { get; }
 
     public FakeClock Clock { get; }
