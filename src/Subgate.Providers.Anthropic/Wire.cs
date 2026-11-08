@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Subgate.Providers.Anthropic;
@@ -115,7 +116,20 @@ internal sealed class StatusLineWindowDto
     public double? UsedPercentage { get; set; }
 
     [JsonPropertyName("resets_at")]
+    [JsonConverter(typeof(UnixOrIsoDateTimeOffsetConverter))]
     public DateTimeOffset? ResetsAt { get; set; }
+}
+
+/// <summary>The status line sends `resets_at` as Unix epoch seconds (docs, read 2026-11-08); an ISO string is read too.</summary>
+internal sealed class UnixOrIsoDateTimeOffsetConverter : JsonConverter<DateTimeOffset>
+{
+    public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        reader.TokenType == JsonTokenType.Number
+            ? DateTimeOffset.FromUnixTimeSeconds(reader.TryGetInt64(out var seconds) ? seconds : (long)reader.GetDouble())
+            : reader.GetDateTimeOffset();
+
+    public override void Write(Utf8JsonWriter writer, DateTimeOffset value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value);
 }
 
 internal sealed class RunResultDto

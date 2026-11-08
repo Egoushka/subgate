@@ -14,6 +14,7 @@
   <ItemGroup>
     <!-- The tarball has no git history for MinVer to read. -->
     <ProjectReference Include="$(PaceProjectPath)" AdditionalProperties="MinVerSkip=true" />
+    <ProjectReference Include="..\Subgate.Providers.Anthropic\Subgate.Providers.Anthropic.csproj" />
   </ItemGroup>
 
 </Project>
