@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Subgate.Cli;
 using Subgate.Tests.Api;
 
@@ -9,7 +8,7 @@ public sealed class StatuslineCommandTests : IDisposable
 {
     private readonly CliHarness _cli = new();
 
-    private static string Input(double fiveHour = 20, double sevenDay = 41.5) => FormattableString.Invariant($$"""
+    internal static string Input(double fiveHour = 20, double sevenDay = 41.5) => FormattableString.Invariant($$"""
         {
           "session_id": "session-placeholder",
           "model": { "id": "model-a", "display_name": "Model A" },
@@ -73,34 +72,6 @@ public sealed class StatuslineCommandTests : IDisposable
 
         Assert.Equal(0, result.ExitCode);
         Assert.Equal("Model A", result.Output.Trim());
-    }
-
-    [Fact]
-    public async Task T13_With_subgate_down_it_prints_the_plain_line_within_400_ms_and_exits_0()
-    {
-        var env = _cli.Environment(ApiHost.OwnerToken, new DownHandler(), consumer: "you", stdin: Input(), clock: TimeProvider.System);
-
-        var timer = Stopwatch.StartNew();
-        var result = await CliHarness.Run(env, "statusline");
-        timer.Stop();
-
-        Assert.Equal(0, result.ExitCode);
-        Assert.Equal("Model A | week 42% used", result.Output.Trim());
-        Assert.True(timer.ElapsedMilliseconds < 400, $"took {timer.ElapsedMilliseconds} ms");
-    }
-
-    [Fact]
-    public async Task T13_With_subgate_slower_than_300_ms_it_prints_the_plain_line_within_400_ms_and_exits_0()
-    {
-        var env = _cli.Environment(ApiHost.OwnerToken, new SlowHandler(TimeSpan.FromSeconds(5)), consumer: "you", stdin: Input(), clock: TimeProvider.System);
-
-        var timer = Stopwatch.StartNew();
-        var result = await CliHarness.Run(env, "statusline");
-        timer.Stop();
-
-        Assert.Equal(0, result.ExitCode);
-        Assert.Equal("Model A | week 42% used", result.Output.Trim());
-        Assert.True(timer.ElapsedMilliseconds < 400, $"took {timer.ElapsedMilliseconds} ms");
     }
 
     [Theory]
