@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Until pace/v0.1.0 is on nuget.org (ADR 0004): the engine's source, fetched by scripts/fetch-pace.sh. -->
+    <PaceProjectPath>$(MSBuildThisFileDirectory)external/switchknife/src/Switchknife.Pace/Switchknife.Pace.csproj</PaceProjectPath>
   </PropertyGroup>
 
 </Project>

@@ -10,6 +10,10 @@ ARG TARGETARCH
 WORKDIR /src
 
 COPY Directory.Build.props subgate.slnx ./
+# The engine's source until pace/v0.1.0 is on nuget.org (ADR 0004): pinned in external/pace.ref.
+COPY external/pace.ref external/pace.ref
+COPY scripts/fetch-pace.sh scripts/fetch-pace.sh
+RUN scripts/fetch-pace.sh
 COPY src/Subgate/Subgate.csproj src/Subgate/
 RUN case "$TARGETARCH" in \
       amd64) echo linux-x64 ;; \
@@ -28,4 +32,6 @@ RUN dotnet publish src/Subgate/Subgate.csproj \
 FROM ${DOTNET_RUNTIME_DEPS_IMAGE} AS runtime
 WORKDIR /app
 COPY --from=build /app/publish/Subgate ./subgate
+# Microsoft.Data.Sqlite loads its native library from beside the binary.
+COPY --from=build /app/publish/libe_sqlite3.so ./
 ENTRYPOINT ["/app/subgate"]

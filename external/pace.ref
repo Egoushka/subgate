@@ -1,0 +1,5 @@
+# The switchknife commit whose src/Switchknife.Pace is Switchknife.Pace 0.1.0 (switchknife#36, #37).
+# Used until pace/v0.1.0 is on nuget.org (ADR 0004): then replace the ProjectReference in src/Subgate/Subgate.csproj
+# with a PackageReference and delete this file, scripts/fetch-pace.sh and the fetch steps in the workflows.
+repository=https://github.com/Egoushka/switchknife
+commit=5522b775c9a75c2ffb02f97651ff3946da63a565
