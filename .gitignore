@@ -9,3 +9,6 @@ config.local.yaml
 bin/
 obj/
 TestResults/
+
+# Switchknife.Pace source, fetched by scripts/fetch-pace.sh until the NuGet package exists (external/pace.ref)
+/external/switchknife/
