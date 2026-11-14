@@ -87,7 +87,7 @@ jobs:
       - run: docker build -t subgate:ci .
       - run: docker run --rm subgate:ci --version
       # I1: serve the example config from the image (listening on all interfaces, state on a volume) and run C1 against it.
-      - name: I1 serve and healthz
+      - name: I1 serve, healthz and I3 self healthcheck
         run: |
           set -euo pipefail
           trap 'docker logs subgate || true; docker rm -f subgate || true' EXIT
@@ -103,6 +103,8 @@ jobs:
           code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8070/healthz)"
           curl -s http://127.0.0.1:8070/v1/status | grep -q '"store":{"ok":true'
           test "$code" = 200
+          # I3: the chiseled image has no shell or curl, so the compose healthcheck is the binary asking itself.
+          docker exec subgate /app/subgate --healthcheck
 
   hygiene:
     runs-on: ubuntu-latest
