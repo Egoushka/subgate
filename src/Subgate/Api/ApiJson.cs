@@ -35,6 +35,11 @@ public sealed record ConsumerStatusBody(
     double Share, double Used, double Reserved, double Allowance, double Remaining, string State, int OpenLeases,
     double WeightedUsd, double ApiUsd, string Estimator, double Apportioned, double? Calibrated);
 
+/// <summary>GET /v1/status/{consumer}: what a client needs before it asks to start a job (state OK, OVER_PACE, LIMITED or STALE).</summary>
+public sealed record ConsumerStateResponse(
+    string Consumer, string State, string Mode, double Share, double Used, double Reserved, double Allowance, double Remaining,
+    int OpenLeases, long? ResetAt, long? MeterAgeS, long? LimitedUntil);
+
 public sealed record StoreStatus(bool Ok, long Errors, string? Note);
 
 /// <summary>GET /v1/status: open on the listen address (ADR 0007).</summary>
@@ -52,4 +57,5 @@ public sealed record StatusResponse(
 [JsonSerializable(typeof(UsageResponse))]
 [JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(StatusResponse))]
+[JsonSerializable(typeof(ConsumerStateResponse))]
 internal sealed partial class ApiJsonContext : JsonSerializerContext;
