@@ -50,6 +50,7 @@ internal sealed class ApiEndpoints(SubgateConfig config, PersistentLedger ledger
     {
         app.MapGet("/healthz", () => Results.Text("ok\n"));
         app.MapGet("/v1/status", Status);
+        app.MapGet("/v1/status/{consumer}", ConsumerState);
         app.MapGet("/metrics", MetricsText);
         app.MapPost("/v1/admit", (HttpContext context) => Admit(context));
         app.MapPost("/v1/usage", (HttpContext context) => Usage(context));
@@ -273,6 +274,23 @@ internal sealed class ApiEndpoints(SubgateConfig config, PersistentLedger ledger
                     account.LimitedUntil?.ToUnixTimeSeconds(), account.K),
                 consumers),
             ApiJsonContext.Default.StatusResponse);
+    }
+
+    private IResult ConsumerState(string consumer)
+    {
+        var status = ledger.Status();
+        if (!status.Consumers.TryGetValue(consumer, out var c))
+        {
+            return Error(StatusCodes.Status404NotFound, "unknown consumer");
+        }
+
+        var account = status.Account;
+        return Results.Json(
+            new ConsumerStateResponse(
+                consumer, ApiNames.Of(c.State), ApiNames.Of(config.Policy.Mode), c.Share, c.Used, c.Reserved, c.Allowance, c.Remaining,
+                c.OpenLeases, account.ResetsAt?.ToUnixTimeSeconds(), account.MeterAge is { } age ? (long)age.TotalSeconds : null,
+                account.LimitedUntil?.ToUnixTimeSeconds()),
+            ApiJsonContext.Default.ConsumerStateResponse);
     }
 
     private IResult MetricsText()
