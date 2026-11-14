@@ -6,6 +6,7 @@ public static class Program
 {
     internal const string Usage = """
         usage: subgate --version
+               subgate --healthcheck
                subgate serve --config <file>
                subgate run [--consumer <name>] [--on-unavailable run|hold] -- <command…>
                subgate statusline [--consumer <name>]
@@ -34,6 +35,8 @@ public static class Program
             case ["--version"]:
                 output.WriteLine(Version);
                 return 0;
+            case ["--healthcheck"]:
+                return RunClient(env => HealthcheckCommand.Run(error, env), environment);
             case ["serve", ..]:
                 return ServeCommand.Run(args[1..], output, error);
             case ["token", ..]:
